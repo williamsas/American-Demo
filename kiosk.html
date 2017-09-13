@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>American Airlines Kiosk</title>
+
+<link rel="stylesheet" type="text/css" href="css/kiosk_style.css">
+<script type="text/javascript">
+
+function extractIndivID()
+{
+var custcode = document.getElementById('code').value;
+var upperCode = custcode.toUpperCase();
+//alert (rob);
+quotepage = "./user-screen.html?INDIVID=" + upperCode;
+window.open(quotepage,"_self")
+}
+
+</script>
+</head>
+
+<body>
+
+<div id='container'>
+
+	<div id='screen'>
+			<img src="images/aa.png" id='logo'/>
+
+			<div id='welcome'>
+
+            	<div id='welcomemessage'>
+                	<h1>Welcome</h1>
+                </div><!--ends welcome message-->
+
+				<p>Please enter your confirmation code or AAdvantage Number to begin the checkin process.</p>
+
+			</div><!--ends welcome div-->
+
+
+			<div id="login">
+
+            	<h2>Confirmation Code / AAdvantage Number</h2>
+                <input id="code" name="code" type="text" value=""/>
+                <script type="text/javascript">
+				document.write('<input id="quote" type="image"  src="images/enter_button.png" value="Get Quote" onClick="extractIndivID();"/></a>');
+				</script>
+
+			</div><!--ends login div-->
+
+			<div id="footer">
+			<table width="100%" border="1" align="left" cellpadding="0" cellspacing="0">
+			  <tr>
+			    <td border="1" align="left" valign="top">
+						Company Confidential - For internal use only.
+						<br>Copyright 2017 &copy; SAS Institute, Inc.
+						<br>All rights reserved
+						<!--<img src="images/footer.jpg" height="65" width="745" />-->
+
+			    </td>
+			    <td border="1" align="right" style="vertical-align:bottom">
+			    	<img src="images/saslogo.jpg" height="45" width="165"/>
+			    </td>
+			  </tr>
+			</table>
+			</div>
+
+	</div><!--ends screen div-->
+</div><!--ends container div-->
+</body>
+</html>

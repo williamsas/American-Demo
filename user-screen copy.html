@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>IDE Kiosk Retail Demo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width">
+<meta name="viewport" content="width=320">
+<link href="./images/app/sas_app_icon.jpg" rel="apple-touch-icon">
+<link rel="stylesheet" type="text/css" href="css/kiosk_style.css">
+<script type="text/javascript" src="./js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript">
+
+		(function(document,navigator,standalone) {
+			// prevents links from apps from oppening in mobile safari
+			// this javascript must be the first script in your <head>
+			if ((standalone in navigator) && navigator[standalone]) {
+				var curnode, location=document.location, stop=/^(a|html)$/i;
+				document.addEventListener('click', function(e) {
+					curnode=e.target;
+					while (!(stop).test(curnode.nodeName)) {
+						curnode=curnode.parentNode;
+					}
+					// Condidions to do this only on links to your own app
+					// if you want all links, use if('href' in curnode) instead.
+					if('href' in curnode && ( curnode.href.indexOf('http') || ~curnode.href.indexOf(location.host) ) ) {
+						e.preventDefault();
+						location.href = curnode.href;
+					}
+				},false);
+			}
+		})(document,window.navigator,'standalone');
+
+function gup( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}
+var cid = gup('INDIVID');
+// alert ("INDIVID=" + cid);
+var FIRST_NAME = "";
+var SURNAME = "";
+var LOAN_AMOUNT = "";
+var APPLICATION_DATE = "";
+var OFFERCODE = "";
+
+function invokeRDM() {
+
+	var rdmRequest = {"version":1,"correlationId":"123","clientTimeZone":"EST","inputs":{"IndivID":parseInt(cid),Channel_Code:"Shop"}};
+
+	$.ajax({
+	type: "POST",
+	url: "../RTDM/rest/runtime/decisions/SAS_for_Finance_Kiosk",
+	headers: { "Accept": "application/vnd.sas.decision+json", "Content-Type": "application/vnd.sas.decision.request+json"},
+	async:false,
+	data: JSON.stringify(rdmRequest)
+	})
+	.success(function( data, status ) {
+	FIRST_NAME = data.outputs.FirstName;
+	SURNAME = data.outputs.Surname;
+	LOAN_AMOUNT = data.outputs.LoanAmount;
+	APPLICATION_DATE = data.outputs.ApplicationDate;
+	OFFERCODE = data.outputs.Offer_Code;
+	});
+}
+window.onpaint = invokeRDM();
+
+// alert("First Name = " + FIRST_NAME);
+var mydate = APPLICATION_DATE.substr(0,10);
+// alert (mydate);
+
+
+</script>
+
+</head>
+
+<body>
+
+<div id='container'>
+
+	<div id='screen'>
+			<img src="images/aa.png" id='logo'/>
+
+
+         <div id='threeboxes'>
+            <div id='loggedin'>
+
+            	<div id='welcomemessage'>
+            		<script type="text/javascript">
+					document.write('<h1>Welcome, ' + FIRST_NAME + '</h1>');
+                	</script>
+                </div><!--ends welcome message-->
+
+                <p>Please see information on your pre-approved loan to the right. </p>
+
+				<p>Thank you for considering SAS for Finance for your loan.</p>
+
+				<p>You are currently pre-approved. Please click the Next button to continue to the complete loan application.</p>
+
+                <img src="images/next_button.png" height="55" width="133" alt='Next button' />
+
+			</div><!--ends loggged in div-->
+
+
+            <div id='loaninfo'>
+            	<div id="welcomemessage">
+                	<h1>Loan Information</h1>
+           		 </div><!--ends welcome message div-->
+
+                 <br />
+                 <h2>Loan Applicant:</h2>
+                 		<p>&nbsp &nbsp
+            			<script type="text/javascript">
+						document.write(FIRST_NAME);
+                		</script>
+                		</p>
+
+                  <br />
+                 <h2>Loan Amount:</h2>
+                 		<script type="text/javascript">
+						document.write('<p> &nbsp &nbsp &nbsp $' + LOAN_AMOUNT + '</p>');
+                		</script>
+
+                  <br />
+                 <h2>Application Date:</h2>
+                 		<p>
+                 		<script type="text/javascript">
+						document.write(mydate);
+                		</script>
+                		</p>
+
+            </div><!--ends loan info div-->
+
+            <script type="text/javascript">
+			document.write('<img src="images/creatives/' + OFFERCODE + '.jpg" id="offer" height="185" width="370" alt="Next Best Offer"  />');
+            </script>
+
+         </div><!--ends three boxes div-->
+
+
+			<div id="footer">
+			<table width="100%" border="1" align="left" cellpadding="0" cellspacing="0">
+			  <tr>
+			    <td border="1" align="left" valign="top">
+						Company Confidential - For internal use only.
+						<br>Copyright 2017 &copy; SAS Institute, Inc.
+						<br>All rights reserved
+						<!--<img src="images/footer.jpg" height="65" width="745" />-->
+
+			    </td>
+			    <td border="1" align="right" style="vertical-align:bottom">
+			    	<img src="images/saslogo.jpg" height="45" width="165"/>
+			    </td>
+			  </tr>
+			</table>
+			</div>
+
+	</div><!--ends screen div-->
+</div><!--ends container div-->
+</body>
+</html>

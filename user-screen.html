@@ -1,0 +1,294 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>IDE Kiosk Retail Demo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width">
+<meta name="viewport" content="width=320">
+<link href="./images/app/sas_app_icon.jpg" rel="apple-touch-icon">
+<link rel="stylesheet" type="text/css" href="css/kiosk_style.css">
+<script type="text/javascript" src="./js/jquery-2.1.1.min.js"></script>
+   <script src="js/jquery-dateFormat.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+		(function(document,navigator,standalone) {
+			// prevents links from apps from oppening in mobile safari
+			// this javascript must be the first script in your <head>
+			if ((standalone in navigator) && navigator[standalone]) {
+				var curnode, location=document.location, stop=/^(a|html)$/i;
+				document.addEventListener('click', function(e) {
+					curnode=e.target;
+					while (!(stop).test(curnode.nodeName)) {
+						curnode=curnode.parentNode;
+					}
+					// Condidions to do this only on links to your own app
+					// if you want all links, use if('href' in curnode) instead.
+					if('href' in curnode && ( curnode.href.indexOf('http') || ~curnode.href.indexOf(location.host) ) ) {
+						e.preventDefault();
+						location.href = curnode.href;
+					}
+				},false);
+			}
+		})(document,window.navigator,'standalone');
+
+function gup( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}
+
+var cid = gup('INDIVID');
+
+  switch (cid) {
+  	case '93H8CF0':
+  		var customerID = 2233;
+  		var FIRST_NAME = "Ted";
+		var SURNAME = "Striker";
+		var MEMBERSHIP_LEVEL = "Gold";
+		var PROGRESS_NEXT_LEVEL = "2";
+		var DESTINATION = "Dallas Fort Worth";
+		var IMAGE='./images/TedStriker.jpg';
+		var OFFER='Premium Economy Seats are available';
+		break;
+  	case '3U616H4':
+  		var customerID = 2234;
+  		var FIRST_NAME = "Dr Rumack";
+		var SURNAME = "";
+		var MEMBERSHIP_LEVEL = "Platinum";
+		var PROGRESS_NEXT_LEVEL = "20";
+		var DESTINATION = "Dallas Fort Worth";
+		var IMAGE='./images/DrRumack.jpg';
+		var OFFER='No upgrades available, you have been added to the list';
+		break;
+	  case 'AABBCCD':
+	  var customerID = 2235;
+  		var FIRST_NAME = "Mrs Hammen";
+		var SURNAME = "";
+		var MEMBERSHIP_LEVEL = "Member";
+		var PROGRESS_NEXT_LEVEL = "24";
+		var DESTINATION = "Dallas Fort Worth";
+		var IMAGE='./images/MrsHammen.jpg';
+		var OFFER='No upgrades available';
+		break;
+  }
+
+
+function setInfo() {
+
+		$('#profileimage').attr('src', IMAGE);
+
+
+}
+
+$( document ).ready(function() {
+    setInfo();
+    $('#offer0').hide();
+    $('#offer1').hide();
+    //trackTeaserClick("premium");
+    getNbaRequest();
+
+});
+
+var nowDate = new Date();
+var today = (nowDate.getMonth()+1)+'-'+nowDate.getDate()+'-'+nowDate.getFullYear();
+
+
+
+
+function getCurrentTimestamp() {
+	var currentDate = new Date();
+	return $.format.date(currentDate, "yyyy-MM-dd HH:mm:ss:SSS");
+}
+
+
+ var now=getCurrentTimestamp();
+
+function getNbaRequest() {
+
+
+	var rdmRequest = {
+		"version":1,"correlationId":"123",
+		"clientTimeZone":"EST",
+		"inputs":{
+			"Customer_ID": customerID ,
+			"Channel_CD":"Shop",
+			"Event_CD": "Standard"
+			}
+		};
+
+	$.ajax({
+	type: "POST",
+	url: "../../SASDecisionServices/rest/runtime/decisions/MobileApp_Offer_Request_CDM",
+	headers: { "Accept": "application/vnd.sas.decision+json", "Content-Type": "application/vnd.sas.decision.request+json" },
+	data: JSON.stringify(rdmRequest)
+	})
+	.success(function( data, status ) {
+				// add your code here to process response.
+				var countNBO = data.outputs.Offer_CDS.length -0;
+				console.log("Number of Offers: " + countNBO);
+
+				for (var i=0; i<countNBO; i++) {
+
+
+						offer_code 				= data.outputs.Offer_CDS[i];
+						offer_name 				= data.outputs.Offer_Names[i];
+						offer_desc 				= data.outputs.Offer_Description[i];
+		   // 			offer_url 				= data.outputs.Offer_Image[i];
+						offer_url 				= data.outputs.Offer_CDS[i] + ".jpg";
+						teaser_code  			= "TC1";
+						ttc 					= data.outputs.Treatment_Tracking_Codes[i];
+						rtc						= data.outputs.Response_Tracking_Code;
+						offer_propensity 	= parseFloat(data.outputs.Offer_Scores[i]).toFixed(4);  // score
+						custid 						= data.outputs.Customer_ID;
+
+		  //			alert ('offer_url=' + offer_url);
+
+		  			if ( offer_name != "Default Offer" && offer_name ) {
+		  			$('#offer' + i).attr('onclick', 'trackTeaserClick("' + offer_code +'");');
+		  			$('#offer' + i).html(offer_desc);
+		  			$('#offer' + i).show();
+	  				}
+				}
+			}
+		);
+	}
+
+function trackTeaserClick(offer_code) {
+
+	var rdmRequest = {
+		"version":1,"correlationId":"123",
+		"clientTimeZone":"EST",
+		"inputs":{
+			"CUSTOMERID": customerID ,
+			"OFFER_CD": offer_code,
+			"TEASER_CD": "click",
+			"PRODUCT_CATEGORY": "offer"
+			}
+		};
+
+	$.ajax({
+	type: "POST",
+	url: "../../SASDecisionServices/rest/runtime/decisions/MobileApp_Teaser_Click",
+	headers: { "Accept": "application/vnd.sas.decision+json", "Content-Type": "application/vnd.sas.decision.request+json" },
+	data: JSON.stringify(rdmRequest)
+	})
+	.success(function( data, status ) {
+				// add your code here to process response.
+
+				console.log("Status: " + status);
+
+
+			}
+		);
+	}
+
+</script>
+
+</head>
+
+<body>
+
+<div id='container'>
+
+	<div id='screen'>
+			<img src="images/aa.png" id='logo'/>
+
+
+         <div id='threeboxes'>
+            <div id='loggedin'>
+
+            	<div id='welcomemessage'>
+            		<script type="text/javascript">
+					document.write('<h1>Welcome, ' + FIRST_NAME + '</h1>');
+                	</script>
+                </div><!--ends welcome message-->
+
+                <img id="profileimage" src="./images/MrsHammen.jpg" height="133" width="133" />
+
+				<p>Check in for your flights.</p>
+
+				<img src="images/next_button.png" height="55" width="133" alt='Next button' />
+
+			</div><!--ends loggged in div-->
+
+
+            <div id='loaninfo'>
+            	<div id="welcomemessage">
+                	<h1>Flight Information</h1>
+           		 </div><!--ends welcome message div-->
+
+                 <br />
+                 <h2>Travelers:</h2>
+                 		<p>&nbsp &nbsp
+            			<script type="text/javascript">
+						document.write('<p> &nbsp &nbsp &nbsp ' + FIRST_NAME + " " + SURNAME +'</p>');
+                		</script>
+                		</p>
+
+                  <br />
+                 <h2>Destination:</h2>
+                 		<script type="text/javascript">
+						document.write('<p> &nbsp &nbsp &nbsp' + DESTINATION + '</p>');
+                		</script>
+
+                  <br />
+                 <h2>Departure Date:</h2>
+                 		<p>
+                 		<script type="text/javascript">
+						document.write(today);
+                		</script>
+                		</p>
+
+            </div><!--ends loan info div-->
+
+            <div id='offerinfo'>
+            	<div id="offermessage">
+                	<h1>Notifications</h1>
+           		 </div><!--ends welcome message div-->
+
+                <br />
+                 <h2>About Your Trip:</h2>
+                 		<p>
+            			  <button id="offer0" class="offerbutton" onclick="trackTeaserClick(offer_code);">Offer 1</button>
+            			</p>
+
+            			<p>
+            			  <button id="offer1" class="offerbutton" onclick="trackTeaserClick(offer_code);">Offer 2</button>
+                		</p>
+
+
+            </div><!--ends loan info div-->
+
+
+
+         </div><!--ends three boxes div-->
+
+
+			<div id="footer">
+			<table width="100%" border="1" align="left" cellpadding="0" cellspacing="0">
+			  <tr>
+			    <td border="1" align="left" valign="top">
+						Company Confidential - For internal use only.
+						<br>Copyright 2017 &copy; SAS Institute, Inc.
+						<br>All rights reserved
+						<!--<img src="images/footer.jpg" height="65" width="745" />-->
+
+			    </td>
+			    <td border="1" align="right" style="vertical-align:bottom">
+			    	<img src="images/saslogo.jpg" height="45" width="165"/>
+			    </td>
+			  </tr>
+			</table>
+			</div>
+
+	</div><!--ends screen div-->
+</div><!--ends container div-->
+</body>
+</html>
